@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TREMA - Retro Word Game</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg: #050510; 
+            --text: #ffffff;
+            --neon-blue: #00ffff; 
+            --neon-dark-blue: #0088ff; 
+            --error: #ff0055; 
+            --success: #00ff88; 
+            --gray: #555577;
+            --font: 'Press Start 2P', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            background-image: linear-gradient(0deg, transparent 50%, rgba(0, 255, 255, 0.02) 50%);
+            background-size: 100% 4px;
+        }
+
+        /* --- TELA INICIAL --- */
+        #start-screen {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 400px;
+            height: 100%;
+            padding: 30px 20px;
+            position: relative;
+        }
+
+        .header-area {
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .title {
+            font-size: 3rem;
+            margin: 0;
+            color: var(--text);
+            text-shadow: 0 0 10px var(--neon-blue), 0 0 20px var(--neon-dark-blue);
+            letter-spacing: 6px;
+        }
+
+        .subtitle {
+            font-size: 0.55rem;
+            color: var(--neon-dark-blue);
+            margin-top: 10px;
+            letter-spacing: 2px;
+        }
+
+        /* Tabela de Liderança Flexível */
+        .leaderboard {
+            flex-grow: 1;
+            width: 100%;
+            background: rgba(0, 10, 35, 0.7);
+            border: 2px solid var(--neon-dark-blue);
+            border-radius: 12px;
+            padding: 20px 15px;
+            margin: 25px 0;
+            box-shadow: 0 0 15px rgba(0, 136, 255, 0.25), inset 0 0 15px rgba(0, 136, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .leaderboard-title {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-size: 0.75rem;
+            color: var(--neon-blue);
+            margin-bottom: 20px;
+            text-shadow: 0 0 8px var(--neon-blue);
+            flex-shrink: 0;
+        }
+
+        .icon-trophy {
+            width: 18px;
+            height: 18px;
+            fill: var(--neon-blue);
+            filter: drop-shadow(0 0 5px var(--neon-blue));
+        }
+
+        .leaderboard ol {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            font-size: 0.65rem;
+            line-height: 2.2;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        .score-row {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            align-items: center;
+            border-bottom: 1px dashed rgba(0, 136, 255, 0.2);
+            padding-bottom: 4px;
+        }
+
+        .score-row .rank {
+            color: var(--neon-dark-blue);
+            text-align: left;
+        }
+
+        .score-row .name {
+            color: var(--text);
+            text-align: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .score-row .pts {
+            color: var(--neon-blue);
+            text-align: right;
+        }
+
+        #my-rank-area {
+            margin-top: 15px; 
+            padding-top: 10px; 
+            border-top: 1px solid var(--neon-dark-blue); 
+            font-size: 0.6rem; 
+            display: flex; 
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        /* Área do Jogador (Fixa na base) */
+        .player-action-area {
+            flex-shrink: 0;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        input {
+            width: 100%;
+            padding: 16px 10px;
+            font-size: 0.8rem;
+            text-align: center;
+            border: 2px solid var(--neon-dark-blue);
+            border-radius: 8px;
+            background-color: rgba(0, 0, 30, 0.6);
+            color: var(--text);
+            text-transform: uppercase;
+            outline: none;
+            font-family: var(--font);
+            transition: all 0.2s;
+            box-shadow: 0 0 10px rgba(0,136,255,0.2);
+        }
+
+        input:focus {
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 15px var(--neon-blue);
+        }
+
+        input::placeholder {
+            color: var(--gray);
+            font-size: 0.65rem;
+        }
+
+        input.error {
+            border-color: var(--error);
+            color: var(--error);
+            box-shadow: 0 0 15px var(--error);
+            animation: shake 0.3s;
+        }
+
+        button {
+            width: 100%;
+            padding: 16px;
+            font-size: 0.85rem;
+            background-color: transparent;
+            color: var(--neon-blue);
+            border: 2px solid var(--neon-blue);
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: var(--font);
+            text-transform: uppercase;
+            box-shadow: 0 0 12px var(--neon-blue);
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--neon-blue);
+            color: var(--bg);
+            box-shadow: 0 0 20px var(--neon-blue);
+        }
+
+        /* --- TELA DO JOGO --- */
+        #game-container {
+            display: none; 
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            position: relative;
+            margin: auto 0;
+        }
+
+        #hud {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            margin-bottom: 25px;
+            color: var(--neon-dark-blue);
+            align-items: center;
+        }
+        
+        .icon-heart {
+            width: 16px;
+            height: 16px;
+            fill: var(--neon-blue);
+            margin-left: 4px;
+            filter: drop-shadow(0 0 4px var(--neon-blue));
+            vertical-align: middle;
+        }
+        .icon-heart.lost {
+            fill: transparent;
+            stroke: var(--gray);
+            stroke-width: 2px;
+            filter: none;
+        }
+
+        #central-area {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 30px auto;
+            display: flex;
+        }
+
+        #letter {
+            font-size: 5.5rem;
+            margin: 0;
+            line-height: 1;
+            text-transform: uppercase;
+            color: white;
+            text-shadow: 0 0 15px var(--neon-blue), 0 0 30px var(--neon-dark-blue);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+        }
+
+        #timer-svg {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            transform: rotate(-90deg); 
+            z-index: 1;
+        }
+        #timer-circle-bg { fill: none; stroke: #111133; stroke-width: 10; }
+        #timer-circle-fill {
+            fill: none;
+            stroke: var(--neon-blue);
+            stroke-width: 10;
+            stroke-linecap: round;
+            stroke-dasharray: 628; 
+            stroke-dashoffset: 0;
+            transition: stroke-dashoffset 0.1s linear, stroke 0.3s;
+            filter: drop-shadow(0 0 8px var(--neon-blue));
+        }
+
+        #message {
+            margin-top: 15px;
+            height: 20px;
+            font-size: 0.65rem;
+            color: var(--gray);
+            text-align: center;
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            font-size: 0.6rem;
+            color: var(--gray);
+        }
+        
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+
+        #game-over {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(5, 5, 16, 0.98);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            padding: 20px;
+            text-align: center;
+        }
+
+        /* --- TELA DE GAME OVER E COMPARTILHAMENTO --- */
+        #game-over .game-over-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+            max-width: 280px;
+            margin-top: 10px;
+        }
+
+        #share-btn {
+            background-color: var(--neon-blue);
+            color: var(--bg);
+            border: 2px solid var(--neon-blue);
+            box-shadow: 0 0 15px var(--neon-blue);
+        }
+
+        #share-btn:hover {
+            background-color: transparent;
+            color: var(--neon-blue);
+            box-shadow: 0 0 20px var(--neon-blue);
+        }
+
+        #give-up-btn {
+            margin-top: 30px;
+            padding: 10px;
+            font-size: 0.55rem;
+            color: var(--gray);
+            border: 1px solid var(--gray);
+            box-shadow: none;
+            width: auto;
+            margin-left: auto;
+            margin-right: auto;
+            display: block;
+        }
+        #give-up-btn:hover {
+            color: var(--error);
+            border-color: var(--error);
+            background-color: transparent;
+            box-shadow: 0 0 10px var(--error);
+        }
+
+        /* --- MODO RESPONSIVO --- */
+        @media (max-width: 600px), (max-height: 750px) {
+            #start-screen { padding: 15px; justify-content: center; }
+            .title { font-size: 2rem; letter-spacing: 4px; margin: 0; }
+            .subtitle { margin-top: 5px; }
+            
+            .leaderboard { margin: 20px 0; padding: 15px 10px; flex-grow: 0; }
+            .leaderboard ol { line-height: 1.8; }
+            
+            .player-action-area { gap: 10px; }
+            input { padding: 12px 10px; }
+            button { padding: 12px; font-size: 0.75rem; }
+            
+            #central-area { width: 120px; height: 120px; margin-bottom: 10px; }
+            #letter { font-size: 3.5rem; }
+            #hud { margin-bottom: 15px; }
+            #give-up-btn { margin-top: 15px; }
+        }
+
+        /* --- SISTEMA DE AJUDA --- */
+        .help-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: transparent;
+            border: 2px solid var(--neon-blue);
+            color: var(--neon-blue);
+            font-family: var(--font);
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+            transition: all 0.2s;
+            z-index: 5;
+            padding: 0;
+        }
+
+        .help-btn:hover {
+            background-color: var(--neon-blue);
+            color: var(--bg);
+            box-shadow: 0 0 18px var(--neon-blue);
+        }
+
+        .help-btn.pulse {
+            animation: helpPulse 1.5s infinite alternate;
+        }
+
+        @keyframes helpPulse {
+            0% { transform: scale(1); box-shadow: 0 0 8px var(--neon-blue); }
+            100% { transform: scale(1.15); box-shadow: 0 0 20px var(--neon-blue), 0 0 30px var(--neon-dark-blue); }
+        }
+
+        #help-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(5, 5, 16, 0.85);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+
+        #help-modal.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .help-content {
+            background: rgba(0, 10, 35, 0.95);
+            border: 2px solid var(--neon-blue);
+            border-radius: 12px;
+            padding: 25px 20px;
+            max-width: 360px;
+            width: 100%;
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.25), inset 0 0 15px rgba(0, 255, 255, 0.1);
+            text-align: center;
+            transform: scale(0.85);
+            transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        #help-modal.show .help-content {
+            transform: scale(1);
+        }
+
+        .help-title {
+            font-size: 1rem;
+            color: var(--neon-blue);
+            margin: 0 0 20px 0;
+            text-shadow: 0 0 8px var(--neon-blue);
+            letter-spacing: 2px;
+        }
+
+        .help-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 25px 0;
+            text-align: left;
+            font-size: 0.58rem;
+            line-height: 2;
+            color: var(--text);
+        }
+
+        .help-list li {
+            margin-bottom: 12px;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .help-list li:last-child {
+            margin-bottom: 0;
+        }
+
+        .help-list .bullet {
+            color: var(--neon-blue);
+            text-shadow: 0 0 5px var(--neon-blue);
+            flex-shrink: 0;
+        }
+
+        .help-close-btn {
+            width: 100%;
+            padding: 12px;
+            font-size: 0.75rem;
+        }
+
+        .wave-text {
+            display: flex;
+            justify-content: center;
+            gap: 2px;
+            font-size: 0.6rem;
+            color: var(--neon-dark-blue);
+            margin: 20px 0;
+            padding: 10px;
+        }
+        .wave-text span {
+            display: inline-block;
+            animation: waveAnim 1.5s infinite ease-in-out;
+        }
+        .wave-text span.space {
+            width: 6px; 
+        }
+        @keyframes waveAnim {
+            0%, 100% { transform: translateY(0); color: var(--neon-dark-blue); text-shadow: none; }
+            50% { transform: translateY(-6px); color: var(--neon-blue); text-shadow: 0 0 10px var(--neon-blue); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. TELA INICIAL -->
+    <div id="start-screen">
+        <button id="help-btn" class="help-btn" onclick="openHelpModal()" aria-label="Ajuda">?</button>
+
+        <div class="header-area">
+            <h1 class="title">TREMA</h1>
+            <div class="subtitle">VELOCIDADE VERBAL</div>
+        </div>
+        
+        <div class="leaderboard">
+            <div class="leaderboard-title">
+                <svg class="icon-trophy" viewBox="0 0 24 24">
+                    <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94A5.01 5.01 0 0011 15.9V18H8v2h8v-2h-3v-2.1c2.22-.49 3.9-2.24 4.39-4.54C19.8 10.83 21 8.87 21 6.5V5c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z"/>
+                </svg>
+                <span id="leaderboard-month-text">TOP 5</span>
+            </div>
+            <ol id="leaderboard-list">
+                <div style="color:var(--gray); text-align:center; font-size: 0.55rem; padding: 10px;">CARREGANDO...</div>
+            </ol>
+
+            <div id="my-rank-area">
+                <span id="my-rank-display" style="color: white;">-</span>
+            </div>
+        </div>
+
+        <div class="player-action-area">
+            <input type="text" id="player-name-input" maxlength="10" placeholder="SEU NOME" autocomplete="off">
+            <button id="start-btn" onclick="initGameSession()" disabled style="opacity: 0.5; cursor: not-allowed;">CARREGANDO...</button>
+        </div>
+    </div>
+
+    <!-- 2. CONTAINER DO JOGO -->
+    <div id="game-container">
+        <div id="hud">
+            <span id="lives-display"></span>
+            <span id="score-display">0 PTS</span>
+        </div>
+        
+        <div id="central-area">
+            <div id="letter">A</div>
+            <svg id="timer-svg" viewBox="0 0 220 220">
+                <circle id="timer-circle-bg" cx="110" cy="110" r="100"></circle>
+                <circle id="timer-circle-fill" cx="110" cy="110" r="100"></circle>
+            </svg>
+        </div>
+        
+        <input type="text" id="word-input" autocomplete="off" placeholder="DIGITE">
+        
+        <div id="message"></div>
+
+        <div class="stats-row">
+            <span>SEQ: <span id="streak-display" style="color:white;">0</span></span>
+            <span>REC: <span id="max-streak-display">0</span></span>
+        </div>
+
+        <button id="give-up-btn" onclick="forceGameOver()">DESISTIR</button>
+    </div>
+
+    <!-- 3. TELA DE GAME OVER -->
+    <div id="game-over">
+        <h1 style="font-size: 1.8rem; margin-bottom: 20px; color: var(--error); text-shadow: 0 0 10px var(--error);">FIM DE JOGO</h1>
+        <h2 id="final-score" style="color: var(--neon-blue); font-size: 1.2rem; margin-bottom: 10px;">0 PTS</h2>
+        <p style="font-size: 0.6rem; color: var(--gray); margin-bottom: 25px;">MAIOR SEQ: <span id="final-streak" style="color: white;">0</span></p>
+        
+        <div class="game-over-actions">
+            <button id="share-btn" onclick="handleShareScore()">COMPARTILHAR RESULTADO</button>
+            <button onclick="backToMenu()" style="padding: 15px 30px;">MENU</button>
+        </div>
+    </div>
+
+    <!-- MODAL DE AJUDA -->
+    <div id="help-modal" onclick="closeHelpModalOnOverlay(event)">
+        <div class="help-content">
+            <h2 class="help-title">COMO JOGAR</h2>
+            <ul class="help-list">
+                <li><span class="bullet">></span> <span>UMA LETRA, UMA PALAVRA.</span></li>
+                <li><span class="bullet">></span> <span>NÃO REPITA PALAVRAS.</span></li>
+                <li><span class="bullet">></span> <span>QUANTO MAIOR E MAIS RÁPIDO, MAIS PONTOS.</span></li>
+                <li><span class="bullet">></span> <span>VOCÊ TEM DUAS CHANCES.</span></li>
+            </ul>
+            <button class="help-close-btn" onclick="closeHelpModal()">ENTENDI</button>
+        </div>
+    </div>
+
+    <!-- MÓDULO DO FIREBASE (COMPATÍVEL COM DADOS ANTIGOS E NOVOS) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "SUA_API_KEY_REAL",
+            authDomain: "point-game-bfd0d.firebaseapp.com",
+            databaseURL: "https://point-game-bfd0d-default-rtdb.firebaseio.com",
+            projectId: "point-game-bfd0d",
+            storageBucket: "point-game-bfd0d.appspot.com",
+            messagingSenderId: "SEU_MESSAGING_SENDER_ID",
+            appId: "SEU_APP_ID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const scoresRef = ref(db, 'scores');
+
+        onValue(scoresRef, (snapshot) => {
+            const listEl = document.getElementById('leaderboard-list');
+            const myRankEl = document.getElementById('my-rank-display');
+            const monthTextEl = document.getElementById('leaderboard-month-text');
+            
+            listEl.innerHTML = '';
+            
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+            const meses = ["JANEIRO", "FEVEREIRO", "MARÇO", "ABRIL", "MAIO", "JUNHO", "JULHO", "AGOSTO", "SETEMBRO", "OUTUBRO", "NOVEMBRO", "DEZEMBRO"];
+            
+            if (monthTextEl) {
+                monthTextEl.innerText = `TOP 5 • ${meses[currentMonth]}`;
+            }
+
+            function getWaveHTML() {
+                const text = "O PÓDIO ESPERA POR VOCÊ!";
+                let html = '<div class="wave-text">';
+                for (let i = 0; i < text.length; i++) {
+                    if (text[i] === ' ') {
+                        html += '<span class="space"></span>';
+                    } else {
+                        html += `<span style="animation-delay: ${i * 0.1}s">${text[i]}</span>`;
+                    }
+                }
+                html += '</div>';
+                return html;
+            }
+
+            if (!snapshot.exists()) {
+                listEl.innerHTML = getWaveHTML();
+                myRankEl.innerText = '-';
+                return;
+            }
+
+            let userBestScores = {};
+
+            snapshot.forEach((child) => {
+                const data = child.val();
+                if (!data || !data.name) return;
+
+                const scoreVal = data.bestScore !== undefined ? data.bestScore : data.score;
+                const timestampVal = data.bestTimestamp !== undefined ? data.bestTimestamp : data.timestamp;
+
+                if (timestampVal && scoreVal !== undefined) {
+                    const scoreDate = new Date(timestampVal);
+                    
+                    if (scoreDate.getMonth() === currentMonth && scoreDate.getFullYear() === currentYear) {
+                        const upperName = data.name.toUpperCase();
+                        
+                        if (!userBestScores[upperName] || scoreVal > userBestScores[upperName].bestScore) {
+                            userBestScores[upperName] = {
+                                name: data.name,
+                                bestScore: scoreVal,
+                                lastScore: data.lastScore !== undefined ? data.lastScore : scoreVal
+                            };
+                        }
+                    }
+                }
+            });
+
+            let scoresArray = Object.values(userBestScores);
+
+            if (scoresArray.length === 0) {
+                listEl.innerHTML = getWaveHTML();
+                myRankEl.innerText = '-';
+                return;
+            }
+
+            scoresArray.sort((a, b) => b.bestScore - a.bestScore);
+
+            const top5 = scoresArray.slice(0, 5);
+            top5.forEach((item, index) => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <div class="score-row">
+                        <span class="rank">#${index + 1}</span>
+                        <span class="name">${item.name}</span>
+                        <span class="pts">${item.bestScore}P</span>
+                    </div>`;
+                listEl.appendChild(li);
+            });
+
+            const savedName = localStorage.getItem('point_player_name');
+            if (savedName) {
+                const playerIndex = scoresArray.findIndex(s => s.name.toUpperCase() === savedName.toUpperCase());
+                if (playerIndex !== -1) {
+                    const playerData = scoresArray[playerIndex];
+                    myRankEl.innerHTML = `
+                        <span style="color:var(--neon-blue);">#${playerIndex + 1}</span>
+                        <span style="color:white; margin: 0 4px;">${savedName}</span>
+                        <span style="color:var(--gray); font-size: 0.55rem;">(ÚLT: ${playerData.lastScore}P)</span>
+                    `;
+                } else {
+                    myRankEl.innerText = 'NÃO RANQUEADO ESTE MÊS';
+                }
+            } else {
+                myRankEl.innerText = 'DIGITE SEU NOME';
+            }
+        });
+
+        window.saveGlobalScore = async function(name, points, streak) {
+            if (points <= 0) return;
+
+            const userKey = name.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+            if (!userKey) return;
+
+            const userRef = ref(db, `scores/${userKey}`);
+            const now = Date.now();
+
+            try {
+                const snapshot = await get(userRef);
+                let bestScore = points;
+                let bestStreak = streak;
+                let bestTimestamp = now;
+
+                if (snapshot.exists()) {
+                    const existingData = snapshot.val();
+                    const oldBest = existingData.bestScore !== undefined ? existingData.bestScore : existingData.score;
+                    
+                    if (oldBest && oldBest > points) {
+                        bestScore = oldBest;
+                        bestStreak = existingData.bestStreak || streak;
+                        bestTimestamp = existingData.bestTimestamp || existingData.timestamp || now;
+                    }
+                }
+
+                await set(userRef, {
+                    name: name,
+                    bestScore: bestScore,
+                    bestStreak: bestStreak,
+                    bestTimestamp: bestTimestamp,
+                    lastScore: points,
+                    lastStreak: streak,
+                    lastTimestamp: now
+                });
+            } catch (err) {
+                console.error("Erro ao salvar dados no Firebase:", err);
+            }
+        };
+    </script>
+
+    <!-- LÓGICA CORE DO JOGO -->
+    <script>
+        let validWords = new Set();
+
+        async function loadExternalDictionary() {
+            try {
+                const response = await fetch('dicionario.txt?v=' + new Date().getTime());
+                const text = await response.text();
+                const lines = text.split('\n');
+                for (let line of lines) {
+                    let clean = line.trim().toUpperCase();
+                    if (clean.length > 1) {
+                        validWords.add(clean);
+                    }
+                }
+                console.log(`Dicionário carregado: ${validWords.size} palavras.`);
+                
+                const btn = document.getElementById('start-btn');
+                btn.disabled = false;
+                btn.style = "";
+                btn.innerText = "JOGAR";
+
+            } catch (e) {
+                console.error("Erro ao carregar o dicionario.txt", e);
+            }
+        }
+
+        loadExternalDictionary();
+
+        const MAX_LIVES = 3;
+        const INITIAL_LIVES = 2;
+        let lives = INITIAL_LIVES;
+        let score = 0;
+        let streak = 0;
+        let maxStreak = 0;
+        let playerName = "JOGADOR";
+        
+        let currentLetter = '';
+        let usedWords = new Set();
+        
+        let timeLimit = 15; 
+        let timeRemaining = 15;
+        let timerInterval;
+        const CIRCUMFERENCE = 628; 
+
+        const elStartScreen = document.getElementById('start-screen');
+        const elGameContainer = document.getElementById('game-container');
+        const elPlayerNameInput = document.getElementById('player-name-input');
+        const elLives = document.getElementById('lives-display');
+        const elScore = document.getElementById('score-display');
+        const elLetter = document.getElementById('letter');
+        const elTimerFill = document.getElementById('timer-circle-fill');
+        const elInput = document.getElementById('word-input');
+        const elMessage = document.getElementById('message');
+        const elStreak = document.getElementById('streak-display');
+        const elMaxStreak = document.getElementById('max-streak-display');
+        const elGameOver = document.getElementById('game-over');
+
+        // Pesos otimizados (Letras difíceis bem distribuídas)
+        const letterWeights = [
+            { letter: 'A', weight: 8 }, { letter: 'E', weight: 7 }, { letter: 'O', weight: 6 },
+            { letter: 'S', weight: 6 }, { letter: 'R', weight: 5 }, { letter: 'C', weight: 5 },
+            { letter: 'P', weight: 5 }, { letter: 'M', weight: 5 }, { letter: 'T', weight: 5 },
+            { letter: 'B', weight: 4 }, { letter: 'D', weight: 4 }, { letter: 'L', weight: 4 },
+            { letter: 'G', weight: 3 }, { letter: 'F', weight: 3 }, { letter: 'I', weight: 3 },
+            { letter: 'U', weight: 3 }, { letter: 'N', weight: 3 }, { letter: 'H', weight: 2 },
+            { letter: 'V', weight: 2 }, { letter: 'J', weight: 1 }, { letter: 'Z', weight: 1 },
+            { letter: 'X', weight: 1 }, { letter: 'Q', weight: 1 }
+        ];
+
+        function getRandomWeightedLetter() {
+            const totalWeight = letterWeights.reduce((sum, item) => sum + item.weight, 0);
+            let random = Math.random() * totalWeight;
+
+            for (const item of letterWeights) {
+                if (random < item.weight) {
+                    return item.letter;
+                }
+                random -= item.weight;
+            }
+            return letterWeights[0].letter;
+        }
+
+        const heartSVGPath = "M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z";
+
+        // --- SISTEMA DE ÁUDIO (WEB AUDIO API) ---
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioContext();
+
+        function playTypingSound() {
+            if (audioCtx.state === 'suspended') return;
+
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            oscillator.type = 'square';
+            oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); 
+            
+            gainNode.gain.setValueAtTime(0.03, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.02);
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.02);
+        }
+
+        function playOneUpSound() {
+            if (audioCtx.state === 'suspended') return;
+            
+            const notas = [523.25, 659.25, 783.99, 1046.50];
+            
+            notas.forEach((freq, index) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.type = 'square';
+                osc.frequency.value = freq;
+                
+                const startTime = audioCtx.currentTime + (index * 0.1);
+                
+                gain.gain.setValueAtTime(0.08, startTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.1);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.start(startTime);
+                osc.stop(startTime + 0.1);
+            });
+        }
+
+        function playErrorSound() {
+            if (audioCtx.state === 'suspended') return;
+
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            oscillator.type = 'sawtooth';
+            oscillator.frequency.setValueAtTime(160, audioCtx.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(60, audioCtx.currentTime + 0.2);
+
+            gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.2);
+        }
+
+        function initGameSession() {
+            const inputVal = elPlayerNameInput.value.trim().toUpperCase();
+            if (inputVal.length === 0) {
+                elPlayerNameInput.classList.add('error');
+                setTimeout(() => elPlayerNameInput.classList.remove('error'), 300);
+                return;
+            }
+            playerName = inputVal;
+            
+            localStorage.setItem('point_player_name', playerName);
+            
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            
+            elStartScreen.style.display = 'none';
+            elGameContainer.style.display = 'block';
+            
+            startGame();
+        }
+
+        function backToMenu() {
+            elGameOver.style.display = 'none';
+            elGameContainer.style.display = 'none';
+            elStartScreen.style.display = 'flex';
+        }
+
+        function startGame() {
+            lives = INITIAL_LIVES;
+            score = 0;
+            streak = 0;
+            maxStreak = 0;
+            usedWords.clear();
+            elGameOver.style.display = 'none';
+            elInput.disabled = false;
+            elInput.value = '';
+            
+            updateHUD();
+            nextRound();
+            
+            setTimeout(() => elInput.focus(), 100);
+        }
+
+        function nextRound() {
+            elInput.value = '';
+            elInput.classList.remove('error');
+            
+            currentLetter = getRandomWeightedLetter();
+            elLetter.innerText = currentLetter;
+
+            timeLimit = Math.max(5, 15 - Math.floor(streak / 2));
+            timeRemaining = timeLimit;
+
+            startTimer();
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            elTimerFill.style.stroke = 'var(--neon-blue)';
+            elTimerFill.style.filter = 'drop-shadow(0 0 8px var(--neon-blue))';
+            
+            timerInterval = setInterval(() => {
+                timeRemaining -= 0.1;
+                
+                const percentage = timeRemaining / timeLimit;
+                const offset = CIRCUMFERENCE - (percentage * CIRCUMFERENCE);
+                elTimerFill.style.strokeDashoffset = offset;
+
+                if (percentage < 0.3) {
+                    elTimerFill.style.stroke = 'var(--error)';
+                    elTimerFill.style.filter = 'drop-shadow(0 0 8px var(--error))';
+                }
+
+                if (timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    handleError("TEMPO ESGOTADO!");
+                }
+            }, 100);
+        }
+
+        function handleError(msg) {
+            playErrorSound();
+
+            clearInterval(timerInterval);
+            elMessage.innerText = msg;
+            elMessage.style.color = 'var(--error)';
+            elInput.classList.add('error');
+            
+            lives--;
+            streak = 0; 
+            
+            updateHUD();
+
+            if (lives <= 0) {
+                setTimeout(showGameOver, 500);
+            } else {
+                setTimeout(() => {
+                    elMessage.innerText = '';
+                    nextRound();
+                }, 1000);
+            }
+        }
+
+        function handleSuccess(word) {
+            clearInterval(timerInterval);
+            usedWords.add(word);
+            streak++;
+            if (streak > maxStreak) maxStreak = streak;
+
+            let msg = "";
+            let msgColor = "var(--success)";
+            
+            const percentageTime = timeRemaining / timeLimit;
+
+            if (streak > 0 && streak % 20 === 0 && lives < MAX_LIVES) {
+                lives++;
+                msg = `+1 VIDA <svg style="width:14px;height:14px;fill:#ff0055;vertical-align:middle;margin-left:4px;" viewBox="0 0 24 24"><path d="${heartSVGPath}"/></svg>`;
+                msgColor = "#ff0055"; 
+                
+                playOneUpSound();
+                
+                document.body.animate([
+                    { backgroundColor: 'rgba(255, 0, 85, 0.25)' },
+                    { backgroundColor: 'var(--bg)' }
+                ], { duration: 500, easing: 'ease-out' });
+
+                elLives.animate([
+                    { transform: 'scale(1)' },
+                    { transform: 'scale(1.6)' },
+                    { transform: 'scale(1)' }
+                ], { duration: 500, easing: 'ease-out' });
+            }
+            else if (percentageTime <= 0.15) {
+                const escapes = ["NO FIO DA NAVALHA!", "POR POUCO!", "SALVOU!"];
+                msg = escapes[Math.floor(Math.random() * escapes.length)];
+                msgColor = "var(--error)"; 
+            }
+            else if (streak > 0 && streak % 5 === 0) {
+                msg = `🔥 COMBO x${streak}! 🔥`;
+                msgColor = "#ffaa00";
+            } 
+            else if (word.length >= 8) {
+                const epicos = ["LENDÁRIO!", "ABSURDO!", "GENIAL!"];
+                msg = epicos[Math.floor(Math.random() * epicos.length)];
+                msgColor = "#b800ff";
+            } 
+            else if (word.length >= 5) {
+                const bons = ["MUITO BEM!", "RÁPIDO!", "EXCELENTE!"];
+                msg = bons[Math.floor(Math.random() * bons.length)];
+                msgColor = "var(--neon-blue)";
+            } 
+            else {
+                const basicos = ["BOA!", "ISSO!", "NICE!", "OK!"];
+                msg = basicos[Math.floor(Math.random() * basicos.length)];
+                msgColor = "var(--success)";
+            }
+
+            elMessage.innerHTML = msg;
+            elMessage.style.color = msgColor;
+            
+            elMessage.animate([
+                { transform: 'scale(1)' },
+                { transform: 'scale(1.4)' }, 
+                { transform: 'scale(1)' }
+            ], { duration: 250, easing: 'ease-out' });
+
+            const lengthPoints = Math.min(word.length, 8);
+            const timeBonus = Math.floor((timeRemaining / timeLimit) * 2);
+            const pointsGained = Math.min(lengthPoints + timeBonus, 10);
+            
+            score += pointsGained;
+            
+            updateHUD();
+            
+            setTimeout(() => {
+                elMessage.innerHTML = '';
+                nextRound();
+            }, 500);
+        }
+
+        function updateHUD() {
+            let livesHTML = '';
+            for(let i = 0; i < MAX_LIVES; i++) {
+                if(i < lives) {
+                    livesHTML += `<svg class="icon-heart" viewBox="0 0 24 24"><path d="${heartSVGPath}"/></svg>`;
+                } else {
+                    livesHTML += `<svg class="icon-heart lost" viewBox="0 0 24 24"><path d="${heartSVGPath}"/></svg>`;
+                }
+            }
+            
+            elLives.innerHTML = livesHTML;
+            elScore.innerText = `${score} PTS`;
+            elStreak.innerText = streak;
+            elMaxStreak.innerText = maxStreak;
+        }
+
+        function forceGameOver() {
+            clearInterval(timerInterval);
+            lives = 0;
+            updateHUD();
+            showGameOver();
+        }
+
+        function showGameOver() {
+            if (score > 0 && typeof window.saveGlobalScore === 'function') {
+                window.saveGlobalScore(playerName, score, maxStreak);
+            }
+
+            elGameOver.style.display = 'flex';
+            document.getElementById('final-score').innerText = `${score} PTS`;
+            document.getElementById('final-streak').innerText = maxStreak;
+            elInput.disabled = true;
+        }
+
+        // --- LÓGICA DO MODAL DE AJUDA ---
+        const elHelpBtn = document.getElementById('help-btn');
+        const elHelpModal = document.getElementById('help-modal');
+
+        if (!localStorage.getItem('point_help_seen')) {
+            elHelpBtn.classList.add('pulse');
+        }
+
+        function openHelpModal() {
+            if (!localStorage.getItem('point_help_seen')) {
+                localStorage.setItem('point_help_seen', 'true');
+                elHelpBtn.classList.remove('pulse');
+            }
+
+            elHelpModal.style.display = 'flex';
+            setTimeout(() => elHelpModal.classList.add('show'), 10);
+        }
+
+        function closeHelpModal() {
+            elHelpModal.classList.remove('show');
+            setTimeout(() => {
+                elHelpModal.style.display = 'none';
+            }, 250);
+        }
+
+        function closeHelpModalOnOverlay(e) {
+            if (e.target === elHelpModal) {
+                closeHelpModal();
+            }
+        }
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && elHelpModal.classList.contains('show')) {
+                closeHelpModal();
+            }
+        });
+
+        // --- EVENTOS DE ENTRADA DO JOGADOR ---
+        elInput.addEventListener('input', function (e) {
+            playTypingSound();
+            
+            elInput.animate([
+                { transform: 'scale(1)' },
+                { transform: 'scale(1.03)' }, 
+                { transform: 'scale(1)' }
+            ], {
+                duration: 100,
+                easing: 'ease-out'
+            });
+        });
+
+        elInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                const word = this.value.trim().toUpperCase().replace(/[^A-ZÁÉÍÓÚÂÊÎÔÛÃÕÀÈÌÒÙÇ]/g, '');
+                
+                if (word.length < 2) {
+                    playErrorSound();
+                    elInput.classList.add('error');
+                    setTimeout(() => elInput.classList.remove('error'), 300);
+                    return;
+                }
+
+                if (word[0] !== currentLetter) {
+                    handleError(`TEM QUE COMEÇAR COM ${currentLetter}!`);
+                    return;
+                }
+
+                if (usedWords.has(word)) {
+                    handleError("JÁ USADA!");
+                    return;
+                }
+
+                if (!validWords.has(word)) {
+                    handleError("PALAVRA DESCONHECIDA!");
+                    return;
+                }
+
+                handleSuccess(word);
+            }
+        });
+
+        elPlayerNameInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                initGameSession();
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if(lives > 0 && elGameContainer.style.display === 'block' && e.target.id !== 'give-up-btn') {
+                elInput.focus();
+            }
+        });
+
+        if (localStorage.getItem('point_player_name')) {
+            elPlayerNameInput.value = localStorage.getItem('point_player_name');
+        }
+
+        // --- MÓDULO DE GERAÇÃO E COMPARTILHAMENTO DE CARD (CANVAS) ---
+
+        /**
+         * Renderiza um card 600x600 via Canvas dinâmico sem afetar o DOM.
+         */
+        async function generateScoreCardCanvas(score, streak) {
+            if (document.fonts) {
+                await document.fonts.load('12px "Press Start 2P"');
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 600;
+            canvas.height = 600;
+            const ctx = canvas.getContext('2d');
+
+            // 1. Fundo Gradiente e Padrão Retro
+            const bgGradient = ctx.createLinearGradient(0, 0, 0, 600);
+            bgGradient.addColorStop(0, '#050510');
+            bgGradient.addColorStop(1, '#0a0a25');
+            ctx.fillStyle = bgGradient;
+            ctx.fillRect(0, 0, 600, 600);
+
+            // Linhas Retro estilo Scanline
+            ctx.fillStyle = 'rgba(0, 255, 255, 0.03)';
+            for (let i = 0; i < 600; i += 8) {
+                ctx.fillRect(0, i, 600, 4);
+            }
+
+            // Borda Neon Interna
+            ctx.strokeStyle = '#0088ff';
+            ctx.lineWidth = 6;
+            ctx.strokeRect(20, 20, 560, 560);
+
+            ctx.textAlign = 'center';
+
+            // 2. Título / Logo (TREMA)
+            ctx.font = '28px "Press Start 2P", monospace, sans-serif';
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowColor = '#00ffff';
+            ctx.shadowBlur = 15;
+            ctx.fillText('TREMA', 300, 100);
+
+            ctx.font = '12px "Press Start 2P", monospace, sans-serif';
+            ctx.fillStyle = '#0088ff';
+            ctx.shadowBlur = 5;
+            ctx.fillText('VELOCIDADE VERBAL', 300, 130);
+
+            // 3. Moldura de Pontuação
+            ctx.fillStyle = 'rgba(0, 10, 35, 0.8)';
+            ctx.fillRect(80, 170, 440, 220);
+            ctx.strokeStyle = '#00ffff';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(80, 170, 440, 220);
+
+            // Pontuação Final
+            ctx.font = '14px "Press Start 2P", monospace, sans-serif';
+            ctx.fillStyle = '#555577';
+            ctx.shadowBlur = 0;
+            ctx.fillText('PONTUAÇÃO FINAL', 300, 220);
+
+            ctx.font = '36px "Press Start 2P", monospace, sans-serif';
+            ctx.fillStyle = '#00ffff';
+            ctx.shadowColor = '#00ffff';
+            ctx.shadowBlur = 12;
+            ctx.fillText(`${score} PTS`, 300, 280);
+
+            // Maior Sequência (Recorde da Rodada)
+            ctx.font = '12px "Press Start 2P", monospace, sans-serif';
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowBlur = 0;
+            ctx.fillText(`MAIOR SEQUÊNCIA: ${streak}`, 300, 340);
+
+            // 4. Chamada para Ação (CTA)
+            ctx.font = '14px "Press Start 2P", monospace, sans-serif';
+            ctx.fillStyle = '#ff0055';
+            ctx.shadowColor = '#ff0055';
+            ctx.shadowBlur = 10;
+            ctx.fillText('VOCÊ CONSEGUE BATER', 300, 450);
+            ctx.fillText('MINHA PONTUAÇÃO?', 300, 480);
+
+            // 5. URL do Jogo
+            ctx.font = '10px "Press Start 2P", monospace, sans-serif';
+            ctx.fillStyle = '#0088ff';
+            ctx.shadowBlur = 0;
+            const gameUrl = window.location.origin + window.location.pathname;
+            ctx.fillText(gameUrl.replace(/^https?:\/\//, ''), 300, 540);
+
+            return canvas;
+        }
+
+        /**
+         * Converte o canvas em um Blob do tipo image/png.
+         */
+        function exportCanvasToBlob(canvas) {
+            return new Promise((resolve) => {
+                canvas.toBlob((blob) => resolve(blob), 'image/png');
+            });
+        }
+
+        /**
+         * Tenta acionar o compartilhamento nativo (Web Share API) ou força o download do PNG.
+         */
+        async function handleShareScore() {
+            const btn = document.getElementById('share-btn');
+            const originalText = btn.innerText;
+            btn.innerText = "GERANDO...";
+            btn.disabled = true;
+
+            try {
+                const finalScore = score;
+                const finalStreak = maxStreak;
+
+                const canvas = await generateScoreCardCanvas(finalScore, finalStreak);
+                const blob = await exportCanvasToBlob(canvas);
+                const file = new File([blob], 'trema-score.png', { type: 'image/png' });
+
+                const shareData = {
+                    title: 'TREMA - Retro Word Game',
+                    text: `Fiz ${finalScore} pontos no TREMA! Você consegue bater minha pontuação?`,
+                    files: [file]
+                };
+
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share(shareData);
+                } else {
+                    const link = document.createElement('a');
+                    link.download = `trema-score-${finalScore}pts.png`;
+                    link.href = URL.createObjectURL(blob);
+                    link.click();
+                    URL.revokeObjectURL(link.href);
+                }
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.error('Erro ao compartilhar resultado:', err);
+                    alert("Para compartilhar ou baixar o card, teste o jogo rodando em um servidor (Live Server ou hospedado).");
+                }
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
