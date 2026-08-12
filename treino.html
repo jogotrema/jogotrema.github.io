@@ -1,0 +1,1516 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TREMA - Modo Treino (SPA)</title>
+  
+  <!-- Fontes Oficiais do Trema -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+
+  <!-- React & Babel via CDN -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    :root {
+      --bg-main: #050510;
+      --neon-primary: #00ffff;
+      --neon-secondary: #0088ff;
+      --alert-error: #ff0055;
+      --success: #00ff88;
+      --neutral: #555577;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background-color: var(--bg-main);
+      color: #e2e8f0;
+      font-family: 'Chakra Petch', sans-serif;
+      /* Scanlines CRT */
+      background-image: linear-gradient(0deg, transparent 50%, rgba(0, 255, 255, 0.02) 50%);
+      background-size: 100% 4px;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    h1, h2, .btn-primary, .display-word, .retro-menu-option, .countdown-number, .round-hero-stat {
+      font-family: 'Press Start 2P', monospace;
+    }
+
+    .trema-container {
+      width: 100%;
+      max-width: 650px;
+      padding: 20px;
+      position: relative;
+    }
+
+    /* --- ANIMAÇÃO DE SHAKE (ERRO) --- */
+    .shake-screen {
+      animation: shakeAnimation 300ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    }
+
+    @keyframes shakeAnimation {
+      10%, 90% { transform: translate3d(-2px, 0, 0); }
+      20%, 80% { transform: translate3d(4px, 0, 0); }
+      30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+      40%, 60% { transform: translate3d(6px, 0, 0); }
+    }
+
+    .error-flash {
+      color: var(--alert-error) !important;
+      border-color: var(--alert-error) !important;
+      text-shadow: 0 0 15px var(--alert-error) !important;
+    }
+
+    /* --- CABEÇALHO / NAVEGAÇÃO --- */
+    .header-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      height: 40px;
+    }
+
+    .btn-back {
+      background: rgba(0, 10, 35, 0.6);
+      border: 1px solid var(--neon-secondary);
+      color: var(--neon-primary);
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 0 10px rgba(0, 136, 255, 0.2);
+    }
+
+    .btn-back:hover {
+      background: var(--neon-secondary);
+      color: #ffffff;
+      box-shadow: 0 0 15px var(--neon-primary);
+      transform: translateX(-2px);
+    }
+
+    /* --- ANIMAÇÕES DE TRANSIÇÃO --- */
+    .fade-step {
+      animation: stepFadeIn 300ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    @keyframes stepFadeIn {
+      from { opacity: 0; transform: translateY(10px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* --- MENU RETRÔ DE SELEÇÃO --- */
+    .retro-menu-container {
+      margin: 30px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .retro-menu-title {
+      font-size: 0.8rem;
+      color: var(--neon-secondary);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .retro-menu-option {
+      font-size: 0.95rem;
+      color: var(--neutral);
+      cursor: pointer;
+      padding: 14px 20px;
+      border-radius: 6px;
+      transition: all 0.15s ease-in-out;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      user-select: none;
+      width: 290px;
+      text-align: left;
+      background: rgba(0, 10, 35, 0.4);
+      border: 1px solid rgba(0, 136, 255, 0.1);
+    }
+
+    .retro-menu-option.selected {
+      color: var(--neon-primary);
+      text-shadow: 0 0 10px var(--neon-primary), 0 0 20px var(--neon-secondary);
+      background: rgba(0, 255, 255, 0.08);
+      border: 1px solid var(--neon-primary);
+      box-shadow: 0 0 12px rgba(0, 255, 255, 0.2);
+    }
+
+    .retro-menu-option.dimmed {
+      opacity: 0.5;
+    }
+
+    .retro-menu-option.dimmed:hover {
+      opacity: 0.85;
+      color: #ffffff;
+      border-color: rgba(0, 136, 255, 0.4);
+    }
+
+    .cursor-blink {
+      display: inline-block;
+      width: 12px;
+      animation: blink 0.8s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    /* --- CARD DE TUTORIAL --- */
+    .tutorial-card {
+      background: rgba(0, 10, 35, 0.85);
+      border: 2px solid var(--neon-secondary);
+      box-shadow: 0 0 20px rgba(0, 136, 255, 0.25), inset 0 0 12px rgba(0, 136, 255, 0.1);
+      border-radius: 10px;
+      padding: 24px;
+      margin: 15px 0 30px 0;
+      text-align: left;
+    }
+
+    .illustration-box {
+      width: 100%;
+      height: 195px;
+      background: rgba(5, 5, 16, 0.95);
+      border: 1px solid rgba(0, 255, 255, 0.25);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      padding: 8px;
+      box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8);
+    }
+
+    .instruction-bullets {
+      margin: 0;
+      padding-left: 20px;
+      color: #cbd5e1;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    .instruction-bullets li {
+      margin-bottom: 8px;
+    }
+
+    /* --- TRANSIÇÃO: CONTAGEM REGRESSIVA --- */
+    .countdown-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 320px;
+    }
+
+    .countdown-status {
+      font-size: 0.95rem;
+      color: var(--neon-secondary);
+      letter-spacing: 2px;
+      margin-bottom: 30px;
+      text-transform: uppercase;
+    }
+
+    .countdown-number {
+      font-size: 3.5rem;
+      color: var(--neon-primary);
+      text-shadow: 0 0 20px var(--neon-primary), 0 0 40px var(--neon-secondary);
+      animation: pulseZoom 400ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes pulseZoom {
+      0% { transform: scale(0.5); opacity: 0; }
+      50% { transform: scale(1.2); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* --- BOTÕES GLOBAIS --- */
+    .btn-primary {
+      width: 100%;
+      background: transparent;
+      color: var(--neon-primary);
+      border: 2px solid var(--neon-primary);
+      padding: 16px 20px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      box-shadow: 0 0 12px var(--neon-primary), inset 0 0 10px rgba(0, 136, 255, 0.2);
+      text-transform: uppercase;
+      transition: all 0.2s;
+    }
+
+    .btn-primary:hover {
+      background: var(--neon-primary);
+      color: var(--bg-main);
+      box-shadow: 0 0 20px var(--neon-primary);
+    }
+
+    .btn-secondary {
+      width: 100%;
+      background: transparent;
+      color: var(--neutral);
+      border: 2px solid var(--neutral);
+      padding: 15px 20px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      font-family: 'Press Start 2P', monospace;
+      transition: all 0.2s;
+    }
+
+    .btn-secondary:hover {
+      color: #fff;
+      border-color: #fff;
+    }
+
+    .keyboard-hint {
+      font-size: 0.7rem;
+      color: var(--neutral);
+      margin-top: 22px;
+    }
+
+    /* --- ESTRUTURA FIXA DE GAMEPLAY (COLUNA CENTRALIZADA) --- */
+    .gameplay-stage {
+      width: 580px;
+      max-width: 100%;
+      min-width: 0;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* --- GAMEPLAY: HUD MINIMALISTA DISCRETO --- */
+    .hud-minimal {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 480px;
+      max-width: 100%;
+      margin: 0 auto;
+      gap: 24px;
+    }
+
+    .hud-stat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .hud-stat-item.align-right {
+      align-items: flex-end;
+    }
+
+    .hud-label {
+      font-size: 0.62rem;
+      color: var(--neon-secondary);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      opacity: 0.85;
+      margin-bottom: 2px;
+    }
+
+    .hud-val {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.85rem;
+      color: #ffffff;
+      text-shadow: 0 0 8px rgba(0, 255, 255, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .hud-val.pulse {
+      color: var(--success);
+      text-shadow: 0 0 12px var(--success);
+      transform: scale(1.1);
+    }
+
+    /* --- GAMEPLAY: CONTAINER FIXO DA PALAVRA PRINCIPAL --- */
+    
+    .word-stage-container {
+      width: 100%;
+      height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 4px 0;
+      position: relative;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    .display-word {
+      margin: 0 !important;
+      padding: 0 !important;
+      line-height: 1 !important;
+      white-space: nowrap;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: clip;
+    }
+
+    /* --- GAMEPLAY: MENSAGEM DE FEEDBACK --- */
+    .feedback-message-slot {
+      height: 24px;
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .feedback-message {
+      font-size: 0.75rem;
+      padding: 3px 12px;
+      border-radius: 12px;
+      background: rgba(0, 10, 35, 0.7);
+      border: 1px solid var(--neon-secondary);
+      color: #e2e8f0;
+      animation: feedbackIn 200ms ease forwards;
+    }
+
+    .feedback-message.leaving {
+      animation: feedbackOut 200ms ease forwards;
+    }
+
+    .feedback-message.tone-error {
+      border-color: var(--alert-error);
+      color: var(--alert-error);
+    }
+
+    .feedback-message.tone-success {
+      border-color: var(--success);
+      color: var(--success);
+    }
+
+    .feedback-message.tone-record {
+      border-color: #ffe600;
+      color: #ffe600;
+      text-shadow: 0 0 8px #ffe600;
+    }
+
+    @keyframes feedbackIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes feedbackOut {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-4px); }
+    }
+
+    /* --- GAMEPLAY: BARRA DE PROGRESSO VISUAL DA RODADA --- */
+    .round-progress-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 480px;
+      max-width: 100%;
+      margin: 14px auto 0;
+    }
+
+    .round-tag {
+      font-size: 0.68rem;
+      color: var(--neutral);
+      letter-spacing: 1.5px;
+      font-family: 'Press Start 2P', monospace;
+    }
+
+    .progress-dots-container {
+      display: flex;
+      gap: 7px;
+      align-items: center;
+    }
+
+    .progress-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: rgba(0, 136, 255, 0.15);
+      border: 1px solid rgba(0, 136, 255, 0.4);
+      transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .progress-dot.active {
+      background: var(--neon-primary);
+      border-color: var(--neon-primary);
+      box-shadow: 0 0 8px var(--neon-primary);
+      transform: scale(1.15);
+    }
+
+    .streak-inline-tag {
+      font-size: 0.68rem;
+      color: var(--neon-secondary);
+      font-family: 'Press Start 2P', monospace;
+      transition: all 0.2s ease;
+    }
+
+    .streak-inline-tag.bump {
+      color: var(--success);
+      text-shadow: 0 0 8px var(--success);
+      transform: scale(1.1);
+    }
+
+    /* --- TELA DE FIM DE RODADA (ESTILO MODO NORMAL) --- */
+    .round-complete-container {
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    .round-complete-tag {
+      font-size: 0.75rem;
+      color: var(--neon-secondary);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .round-complete-hero {
+      font-size: 3.8rem;
+      color: var(--neon-primary);
+      text-shadow: 0 0 25px var(--neon-primary), 0 0 50px var(--neon-secondary);
+      margin: 10px 0 30px 0;
+      animation: pulseZoom 400ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .round-complete-stats-row {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-bottom: 35px;
+    }
+
+    .round-stat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .round-stat-item .label {
+      font-size: 0.65rem;
+      color: var(--neutral);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .round-stat-item .value {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 1.1rem;
+      color: #ffffff;
+      text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+    }
+  </style>
+</head>
+<body>
+
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    // --- SINTETIZADOR DE ÁUDIO RETRÔ ---
+    const playRetroSound = (type) => {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        if (type === 'error') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(140, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(70, ctx.currentTime + 0.2);
+          gain.gain.setValueAtTime(0.2, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.2);
+        } else if (type === 'success') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(440, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.12);
+          gain.gain.setValueAtTime(0.12, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.12);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.12);
+        }
+      } catch (e) {
+        // Áudio bloqueado ou não suportado
+      }
+    };
+
+    // --- ÍCONES VETORIAIS ---
+    const IconBack = () => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+    );
+
+    const IconComputer = ({ size = 20, color = "currentColor" }) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+        <line x1="8" y1="21" x2="16" y2="21"></line>
+        <line x1="12" y1="17" x2="12" y2="21"></line>
+      </svg>
+    );
+
+    const IconMobile = ({ size = 20, color = "currentColor" }) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+        <line x1="12" y1="18" x2="12.01" y2="18"></line>
+      </svg>
+    );
+
+    // --- ILUSTRAÇÕES VETORIAIS SVG ---
+    const ComputerIllustration = () => {
+      const homeRow = [
+        { label: 'A', highlight: true },
+        { label: 'S', highlight: true },
+        { label: 'D', highlight: true },
+        { label: 'F', highlight: true, home: true },
+        { label: 'G', highlight: false },
+        { label: 'H', highlight: false },
+        { label: 'J', highlight: true, home: true },
+        { label: 'K', highlight: true },
+        { label: 'L', highlight: true },
+        { label: 'Ç', highlight: true }
+      ];
+
+      const homeKeyW = 32, homeGap = 3, homeStartX = 32, homeY = 44, homeH = 16;
+      const keyX = (i) => homeStartX + i * (homeKeyW + homeGap);
+      const keyCenterX = (i) => keyX(i) + homeKeyW / 2;
+
+      return (
+        <svg width="100%" height="100%" viewBox="0 0 420 180" fill="none">
+          <defs>
+            <filter id="glow-cyan" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+            <filter id="glow-green" x="-30%" y="-30%" width="160%" height="160%">
+              <feGaussianBlur stdDeviation="4" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+          </defs>
+
+          <ellipse cx="210" cy="170" rx="195" ry="8" fill="rgba(0,136,255,0.08)" />
+
+          <rect x="15" y="6" width="395" height="100" rx="10" fill="#090d20" stroke="#0088ff" strokeWidth="2" />
+          <rect x="20" y="11" width="385" height="90" rx="6" fill="#040612" stroke="rgba(0,255,255,0.12)" strokeWidth="1" />
+
+          {Array.from({ length: 13 }).map((_, i) => (
+            <rect key={`num-${i}`} x={20 + i * 29} y="14" width="26" height="12" rx="2" fill="rgba(0,136,255,0.16)" stroke="rgba(0,136,255,0.3)" strokeWidth="0.5" />
+          ))}
+
+          {Array.from({ length: 12 }).map((_, i) => (
+            <rect key={`qwe-${i}`} x={34 + i * 29} y="30" width="27" height="12" rx="2" fill="rgba(0,136,255,0.16)" stroke="rgba(0,136,255,0.3)" strokeWidth="0.5" />
+          ))}
+
+          {Array.from({ length: 10 }).map((_, i) => (
+            <rect key={`zxc-${i}`} x={54 + i * 30} y="62" width="27" height="12" rx="2" fill="rgba(0,136,255,0.16)" stroke="rgba(0,136,255,0.3)" strokeWidth="0.5" />
+          ))}
+
+          <rect x="110" y="80" width="200" height="14" rx="3" fill="rgba(0,136,255,0.16)" stroke="rgba(0,136,255,0.3)" strokeWidth="0.5" />
+
+          {homeRow.map((key, i) => (
+            <g key={`home-${i}`} filter={key.home ? 'url(#glow-green)' : (key.highlight ? 'url(#glow-cyan)' : undefined)}>
+              <rect
+                x={keyX(i)}
+                y={homeY}
+                width={homeKeyW}
+                height={homeH}
+                rx="3"
+                fill={key.home ? 'rgba(0,255,136,0.35)' : (key.highlight ? 'rgba(0,255,255,0.28)' : 'rgba(0,136,255,0.14)')}
+                stroke={key.home ? '#00ff88' : (key.highlight ? '#00ffff' : 'rgba(0,136,255,0.3)')}
+                strokeWidth={key.highlight ? '1.8' : '0.5'}
+              />
+              <text
+                x={keyCenterX(i)}
+                y={homeY + homeH - 4}
+                fill={key.home ? '#00ff88' : (key.highlight ? '#00ffff' : '#4a5a80')}
+                fontSize="9"
+                textAnchor="middle"
+                fontFamily="monospace"
+                fontWeight="bold"
+              >
+                {key.label}
+              </text>
+              {key.home && (
+                <rect x={keyCenterX(i) - 4} y={homeY + homeH - 3} width="8" height="1.6" rx="0.8" fill="#00ff88" />
+              )}
+            </g>
+          ))}
+
+          <g filter="url(#glow-cyan)">
+            <path d="M 60 178 C 55 145, 75 120, 115 125 C 135 128, 145 148, 138 178 Z" fill="rgba(0,255,255,0.12)" stroke="rgba(0,255,255,0.5)" strokeWidth="1.5" />
+            <path d="M 72 135 C 65 110, 50 82, 48 58" stroke="rgba(0,255,255,0.8)" strokeWidth="6" strokeLinecap="round" fill="none" />
+            <circle cx="48" cy="52" r="3.5" fill="rgba(0,255,255,0.9)" />
+            <path d="M 88 128 C 84 102, 83 78, 83 58" stroke="rgba(0,255,255,0.8)" strokeWidth="6.5" strokeLinecap="round" fill="none" />
+            <circle cx="83" cy="52" r="3.5" fill="rgba(0,255,255,0.9)" />
+            <path d="M 104 126 C 105 100, 118 78, 118 58" stroke="rgba(0,255,255,0.8)" strokeWidth="7" strokeLinecap="round" fill="none" />
+            <circle cx="118" cy="52" r="3.5" fill="rgba(0,255,255,0.9)" />
+          </g>
+
+          <g filter="url(#glow-green)">
+            <path d="M 122 130 C 130 105, 153 78, 153 58" stroke="#00ff88" strokeWidth="7.5" strokeLinecap="round" fill="none" />
+            <circle cx="153" cy="52" r="4.5" fill="#00ff88" />
+          </g>
+
+          <g filter="url(#glow-cyan)">
+            <path d="M 132 146 C 145 138, 168 112, 175 92" stroke="rgba(0,255,255,0.75)" strokeWidth="7" strokeLinecap="round" fill="none" />
+            <circle cx="175" cy="88" r="3.5" fill="rgba(0,255,255,0.85)" />
+          </g>
+
+          <g filter="url(#glow-cyan)">
+            <path d="M 360 178 C 365 145, 345 120, 305 125 C 285 128, 275 148, 282 178 Z" fill="rgba(0,255,255,0.12)" stroke="rgba(0,255,255,0.5)" strokeWidth="1.5" />
+            <path d="M 348 135 C 355 110, 363 82, 363 58" stroke="rgba(0,255,255,0.8)" strokeWidth="6" strokeLinecap="round" fill="none" />
+            <circle cx="363" cy="52" r="3.5" fill="rgba(0,255,255,0.9)" />
+            <path d="M 332 128 C 336 102, 328 78, 328 58" stroke="rgba(0,255,255,0.8)" strokeWidth="6.5" strokeLinecap="round" fill="none" />
+            <circle cx="328" cy="52" r="3.5" fill="rgba(0,255,255,0.9)" />
+            <path d="M 316 126 C 315 100, 293 78, 293 58" stroke="rgba(0,255,255,0.8)" strokeWidth="7" strokeLinecap="round" fill="none" />
+            <circle cx="293" cy="52" r="3.5" fill="rgba(0,255,255,0.9)" />
+          </g>
+
+          <g filter="url(#glow-green)">
+            <path d="M 298 130 C 290 105, 258 78, 258 58" stroke="#00ff88" strokeWidth="7.5" strokeLinecap="round" fill="none" />
+            <circle cx="258" cy="52" r="4.5" fill="#00ff88" />
+          </g>
+
+          <g filter="url(#glow-cyan)">
+            <path d="M 288 146 C 275 138, 252 112, 245 92" stroke="rgba(0,255,255,0.75)" strokeWidth="7" strokeLinecap="round" fill="none" />
+            <circle cx="245" cy="88" r="3.5" fill="rgba(0,255,255,0.85)" />
+          </g>
+        </svg>
+      );
+    };
+
+    const MobileIllustration = () => {
+      const phone = { x: 70, y: 20, width: 280, height: 120 };
+      const pad = 8;
+      const kbY = phone.y + 68;
+
+      return (
+        <svg width="100%" height="100%" viewBox="0 0 420 180" fill="none">
+          <defs>
+            <filter id="glow-cyan-mob" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+            <filter id="glow-green-mob" x="-30%" y="-30%" width="160%" height="160%">
+              <feGaussianBlur stdDeviation="4" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+          </defs>
+
+          <ellipse cx="210" cy="168" rx="175" ry="7" fill="rgba(0,136,255,0.08)" />
+
+          <rect x={phone.x} y={phone.y} width={phone.width} height={phone.height} rx="14" fill="#090d20" stroke="#0088ff" strokeWidth="2" />
+          <rect x={phone.x + pad} y={phone.y + pad} width={phone.width - pad * 2} height={phone.height - pad * 2} rx="8" fill="#040612" stroke="rgba(0,255,255,0.15)" strokeWidth="1" />
+
+          <rect x={phone.x + 20} y={phone.y + 16} width={phone.width - 40} height="10" rx="2" fill="rgba(0,255,255,0.18)" />
+          <rect x={phone.x + 20} y={phone.y + 30} width={phone.width - 70} height="10" rx="2" fill="rgba(0,255,255,0.18)" />
+
+          {Array.from({ length: 9 }).map((_, c) => (
+            <rect key={`kb0-${c}`} x={86 + c * 24} y={kbY} width="20" height="11" rx="2" fill="rgba(0,136,255,0.2)" stroke="rgba(0,136,255,0.35)" strokeWidth="0.5" />
+          ))}
+          {Array.from({ length: 9 }).map((_, c) => (
+            <rect key={`kb1-${c}`} x={98 + c * 24} y={kbY + 15} width="20" height="11" rx="2" fill="rgba(0,136,255,0.2)" stroke="rgba(0,136,255,0.35)" strokeWidth="0.5" />
+          ))}
+          {Array.from({ length: 7 }).map((_, c) => (
+            <rect key={`kb2-${c}`} x={110 + c * 24} y={kbY + 30} width="20" height="11" rx="2" fill="rgba(0,136,255,0.2)" stroke="rgba(0,136,255,0.35)" strokeWidth="0.5" />
+          ))}
+
+          <g filter="url(#glow-cyan-mob)">
+            <path d="M 20 170 C 15 120, 25 70, 58 50 C 65 58, 68 85, 68 110 C 68 140, 48 170, 20 170 Z" fill="rgba(0,255,255,0.12)" stroke="rgba(0,255,255,0.4)" strokeWidth="1.5" />
+            <path d="M 52 42 C 68 40, 78 45, 76 54 C 74 60, 64 62, 54 58" fill="rgba(0,136,255,0.25)" stroke="rgba(0,255,255,0.5)" strokeWidth="1.2" />
+            <path d="M 54 62 C 72 60, 80 65, 78 74 C 76 80, 64 82, 56 78" fill="rgba(0,136,255,0.25)" stroke="rgba(0,255,255,0.5)" strokeWidth="1.2" />
+            <path d="M 54 82 C 72 80, 80 85, 78 94 C 76 100, 64 102, 56 98" fill="rgba(0,136,255,0.25)" stroke="rgba(0,255,255,0.5)" strokeWidth="1.2" />
+            <path d="M 52 102 C 68 100, 76 105, 74 114 C 72 120, 62 122, 54 118" fill="rgba(0,136,255,0.25)" stroke="rgba(0,255,255,0.5)" strokeWidth="1.2" />
+          </g>
+
+          <g filter="url(#glow-green-mob)">
+            <path d="M 42 125 C 60 110, 100 102, 138 98" stroke="#00ff88" strokeWidth="10" strokeLinecap="round" fill="none" />
+            <circle cx="138" cy="98" r="5" fill="#00ff88" />
+          </g>
+
+          <g filter="url(#glow-cyan-mob)">
+            <path d="M 400 170 C 405 120, 395 70, 362 50 C 355 58, 352 85, 352 110 C 352 140, 372 170, 400 170 Z" fill="rgba(0,255,255,0.12)" stroke="rgba(0,255,255,0.4)" strokeWidth="1.5" />
+            <path d="M 368 42 C 352 40, 342 45, 344 54 C 346 60, 356 62, 366 58" fill="rgba(0,136,255,0.25)" stroke="rgba(0,255,255,0.5)" strokeWidth="1.2" />
+            <path d="M 366 62 C 348 60, 340 65, 342 74 C 344 80, 356 82, 364 78" fill="rgba(0,136,255,0.25)" stroke="rgba(0,255,255,0.5)" strokeWidth="1.2" />
+            <path d="M 366 82 C 348 80, 340 85, 342 94 C 344 100, 356 102, 364 98" fill="rgba(0,136,255,0.25)" stroke="rgba(0,255,255,0.5)" strokeWidth="1.2" />
+            <path d="M 368 102 C 352 100, 344 105, 346 114 C 348 120, 358 122, 366 118" fill="rgba(0,136,255,0.25)" stroke="rgba(0,255,255,0.5)" strokeWidth="1.2" />
+          </g>
+
+          <g filter="url(#glow-green-mob)">
+            <path d="M 378 125 C 360 110, 320 102, 282 98" stroke="#00ff88" strokeWidth="10" strokeLinecap="round" fill="none" />
+            <circle cx="282" cy="98" r="5" fill="#00ff88" />
+          </g>
+        </svg>
+      );
+    };
+
+    // --- DICIONÁRIO EXTERNO ---
+
+const loadDictionary = async () => {
+  const response = await fetch('./dicionario.txt');
+
+  if (!response.ok) {
+    throw new Error('Não foi possível carregar o dicionário.');
+  }
+
+  const text = await response.text();
+
+  return text
+    .split(/\r?\n/)
+    .map(word => word.trim().toLowerCase())
+    .filter(word => word.length > 0);
+};
+
+const getWordDifficulty = (correctCount) => {
+  const progress = correctCount / 10;
+
+  if (progress < 0.2) return 1;
+  if (progress < 0.4) return 2;
+  if (progress < 0.6) return 3;
+  if (progress < 0.8) return 4;
+
+  return 5;
+};
+
+const getWordPool = (difficulty, dictionary) => {
+  const rules = {
+    1: { minLength: 4, maxLength: 6 },
+    2: { minLength: 5, maxLength: 7 },
+    3: { minLength: 6, maxLength: 9 },
+    4: { minLength: 8, maxLength: 11 },
+    5: { minLength: 10, maxLength: 14 }
+  };
+
+  const rule = rules[difficulty];
+
+  return dictionary.filter(word =>
+    word.length >= rule.minLength &&
+    word.length <= rule.maxLength
+  );
+};
+
+const pickWord = (correctCount, dictionary, avoidWord = '') => {
+  const difficulty = getWordDifficulty(correctCount);
+  const pool = getWordPool(difficulty, dictionary);
+
+  if (pool.length === 0) {
+    return dictionary[Math.floor(Math.random() * dictionary.length)];
+  }
+
+  if (pool.length === 1) {
+    return pool[0];
+  }
+
+  let candidate;
+
+  do {
+    candidate = pool[Math.floor(Math.random() * pool.length)];
+  } while (candidate === avoidWord);
+
+  return candidate;
+};
+
+    // --- BANCO DE MENSAGENS DE FEEDBACK VARIÁVEL ---
+    const FEEDBACK_MESSAGES = {
+      speed: ["Tá ficando mais rápido, hein!", "Olha esse ritmo!"],
+      streak: ["A sequência tá aumentando!", "5 SEGUIDAS??? Tá ficando bom"],
+      error: ["Foi quase!", "Essa escapou. Continua."],
+      recovery: ["Boa recuperação!", "Voltou pro ritmo."],
+      record: ["NOVO RECORDE!", "Você acabou de melhorar sua marca."],
+      share: ["Resumo copiado!", "Pronto pra compartilhar!"]
+    };
+
+    const pickFeedbackMessage = (type) => {
+      const list = FEEDBACK_MESSAGES[type] || [];
+      return list[Math.floor(Math.random() * list.length)] || '';
+    };
+
+    // --- ETAPA 1: ESCOLHA DO DISPOSITIVO ---
+    function DeviceSelectStep({ selectedDevice, onSelectDevice, onConfirm, onBack }) {
+      useEffect(() => {
+        const handleKeyDown = (e) => {
+          if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+            e.preventDefault();
+            onSelectDevice(selectedDevice === 'pc' ? 'mobile' : 'pc');
+          } else if (e.key === 'Enter') {
+            e.preventDefault();
+            onConfirm();
+          }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+      }, [selectedDevice, onSelectDevice, onConfirm]);
+
+      return (
+        <div className="fade-step">
+          <div className="header-nav">
+            <button className="btn-back" onClick={onBack} title="Voltar">
+              <IconBack />
+            </button>
+          </div>
+
+          <div style={{ textAlign: 'center' }}>
+            <h1 style={{ color: '#00ffff', fontSize: '1.6rem', margin: '0 0 12px 0', textShadow: '0 0 10px #00ffff' }}>
+              MODO TREINO
+            </h1>
+            
+            <p style={{ color: '#cbd5e1', fontSize: '0.95rem', lineHeight: '1.5', margin: '0 0 25px 0' }}>
+              Melhore sua velocidade e precisão de digitação antes de entrar nas partidas oficiais.
+            </p>
+
+            <div className="retro-menu-container">
+              <span className="retro-menu-title">Como você vai jogar?</span>
+              
+              <div 
+                className={`retro-menu-option ${selectedDevice === 'pc' ? 'selected' : 'dimmed'}`}
+                onClick={() => onSelectDevice('pc')}
+              >
+                <span className="cursor-blink">{selectedDevice === 'pc' ? '>' : ' '}</span>
+                <IconComputer color={selectedDevice === 'pc' ? '#00ffff' : '#555577'} />
+                <span>Computador</span>
+              </div>
+
+              <div 
+                className={`retro-menu-option ${selectedDevice === 'mobile' ? 'selected' : 'dimmed'}`}
+                onClick={() => onSelectDevice('mobile')}
+              >
+                <span className="cursor-blink">{selectedDevice === 'mobile' ? '>' : ' '}</span>
+                <IconMobile color={selectedDevice === 'mobile' ? '#00ffff' : '#555577'} />
+                <span>Celular</span>
+              </div>
+            </div>
+
+            <button className="btn-primary" onClick={onConfirm}>
+              CONFIRMAR
+            </button>
+
+            <div className="keyboard-hint">
+              Dica: Use as setas [↑/↓] para escolher e [Enter] para confirmar
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // --- ETAPA 2: TUTORIAL DO DISPOSITIVO ---
+    function TutorialStep({ device, onStartTraining, onBack }) {
+      useEffect(() => {
+        const handleKeyDown = (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            onStartTraining();
+          } else if (e.key === 'Escape') {
+            e.preventDefault();
+            onBack();
+          }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+      }, [onStartTraining, onBack]);
+
+      return (
+        <div className="fade-step">
+          <div className="header-nav">
+            <button className="btn-back" onClick={onBack} title="Voltar ao seletor">
+              <IconBack />
+            </button>
+          </div>
+
+          <div style={{ textAlign: 'center' }}>
+            <h1 style={{ color: '#00ffff', fontSize: '1.3rem', margin: '0 0 10px 0' }}>
+              TUTORIAL — {device === 'pc' ? 'COMPUTADOR' : 'CELULAR'}
+            </h1>
+
+            <div className="tutorial-card">
+              {device === 'pc' ? (
+                <>
+                  <div className="illustration-box">
+                    <ComputerIllustration />
+                  </div>
+
+                  <h3 style={{ color: '#00ffff', margin: '0 0 10px 0', fontSize: '1rem', fontFamily: "'Chakra Petch', sans-serif" }}>
+                    Posição Correta das Mãos
+                  </h3>
+
+                  <ul className="instruction-bullets">
+                    <li>Mantenha os dedos assentes na fileira central (<strong>ASDF</strong> e <strong>JKLÇ</strong>).</li>
+                    <li>Utilize todos os 10 dedos para alcançar as demais teclas.</li>
+                    <li>Retorne sempre os indicadores para as teclas de referência (F e J).</li>
+                  </ul>
+                </>
+              ) : (
+                <>
+                  <div className="illustration-box">
+                    <MobileIllustration />
+                  </div>
+
+                  <h3 style={{ color: '#00ffff', margin: '0 0 10px 0', fontSize: '1rem', fontFamily: "'Chakra Petch', sans-serif" }}>
+                    Pegada Bimanual
+                  </h3>
+
+                  <ul className="instruction-bullets">
+                    <li>Segure o aparelho firmemente com ambas as mãos pelas laterais.</li>
+                    <li>Utilize exclusivamente ambos os polegares para digitar.</li>
+                    <li>Desative a autocorreção do teclado para avaliar sua precisão real.</li>
+                  </ul>
+                </>
+              )}
+            </div>
+
+            <button className="btn-primary" onClick={onStartTraining}>
+              COMEÇAR TREINO
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // --- TRANSIÇÃO: ANIMAÇÃO DE CONTAGEM REGRESSIVA ---
+    function CountdownStep({ onComplete }) {
+      const [step, setStep] = useState(3);
+
+      useEffect(() => {
+        const timer = setInterval(() => {
+          setStep((prev) => {
+            if (prev <= 1) {
+              clearInterval(timer);
+              setTimeout(onComplete, 400);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 500);
+
+        return () => clearInterval(timer);
+      }, [onComplete]);
+
+      return (
+        <div className="countdown-container fade-step">
+          <div className="countdown-status">Preparando treino...</div>
+          <div className="countdown-number" key={step}>
+            {step > 0 ? step : 'COMEÇAR!'}
+          </div>
+        </div>
+      );
+    }
+
+    // --- SESSÃO DE TREINO (GAMEPLAY MODO NORMAL) ---
+    function SessionPage({ onHome }) {
+      const inputRef = useRef(null);
+      const feedbackTimers = useRef([]);
+
+      const [round, setRound] = useState(1);
+      const [phase, setPhase] = useState('typing'); 
+
+      const [dictionary, setDictionary] = useState([]);
+      const [dictionaryError, setDictionaryError] = useState(false);
+
+      const [currentWord, setCurrentWord] = useState('');
+      const [inputValue, setInputValue] = useState('');
+      const [correctCount, setCorrectCount] = useState(0); 
+      const [isErrorFlash, setIsErrorFlash] = useState(false);
+      const [isShaking, setIsShaking] = useState(false);
+      const [wordStartTime, setWordStartTime] = useState(Date.now());
+
+      const [totalCorrect, setTotalCorrect] = useState(0);
+      const [timeSum, setTimeSum] = useState(0);
+      const [bestWordTime, setBestWordTime] = useState(null);
+      const [currentStreak, setCurrentStreak] = useState(0);
+      const [bestStreak, setBestStreak] = useState(0);
+      const [lastWasError, setLastWasError] = useState(false);
+
+      const [pulseAvg, setPulseAvg] = useState(false);
+      const [pulseStreak, setPulseStreak] = useState(false);
+
+      const [feedback, setFeedback] = useState(null);
+      const [feedbackLeaving, setFeedbackLeaving] = useState(false);
+
+      useEffect(() => {
+        let cancelled = false;
+
+        const initializeDictionary = async () => {
+          try {
+            const words = await loadDictionary();
+
+            if (cancelled) return;
+
+            setDictionary(words);
+            setCurrentWord(pickWord(0, words));
+          } catch (error) {
+            console.error('Erro ao carregar dicionário:', error);
+            setDictionaryError(true);
+          }
+        };
+
+        initializeDictionary();
+
+        return () => {
+          cancelled = true;
+        };
+      }, []);
+
+      useEffect(() => {
+        inputRef.current?.focus();
+        const handleGlobalClick = () => inputRef.current?.focus();
+        window.addEventListener('click', handleGlobalClick);
+        return () => window.removeEventListener('click', handleGlobalClick);
+      }, [phase]);
+
+      useEffect(() => () => feedbackTimers.current.forEach(clearTimeout), []);
+
+      const avgTime = totalCorrect > 0 ? timeSum / totalCorrect : 0;
+
+      const triggerFeedback = (type, tone) => {
+        feedbackTimers.current.forEach(clearTimeout);
+        feedbackTimers.current = [];
+        const text = pickFeedbackMessage(type);
+        if (!text) return;
+        setFeedback({ id: Date.now() + Math.random(), text, tone });
+        setFeedbackLeaving(false);
+        feedbackTimers.current.push(setTimeout(() => setFeedbackLeaving(true), 1800));
+        feedbackTimers.current.push(setTimeout(() => setFeedback(null), 2150));
+      };
+
+      const triggerPulse = (kind) => {
+        if (kind === 'avg') {
+          setPulseAvg(true);
+          setTimeout(() => setPulseAvg(false), 500);
+        } else if (kind === 'streak') {
+          setPulseStreak(true);
+          setTimeout(() => setPulseStreak(false), 500);
+        }
+      };
+
+      const processWordSubmission = (typedWord) => {
+        const isCorrect = typedWord === currentWord;
+        const wordDuration = Math.max(0.2, (Date.now() - wordStartTime) / 1000);
+        const roundWillComplete = isCorrect && (correctCount + 1 >= 10);
+
+        if (isCorrect) {
+          const newTotalCorrect = totalCorrect + 1;
+          const newTimeSum = timeSum + wordDuration;
+          const newStreak = currentStreak + 1;
+          const isNewStreakRecord = newStreak > bestStreak && newStreak >= 3;
+          const isNewWordRecord = bestWordTime !== null && newTotalCorrect > 3 && wordDuration < bestWordTime;
+          const previousAvg = avgTime;
+
+          setCorrectCount(prev => prev + 1);
+          setTotalCorrect(newTotalCorrect);
+          setTimeSum(newTimeSum);
+          setCurrentStreak(newStreak);
+          setBestStreak(prev => Math.max(prev, newStreak));
+          if (bestWordTime === null || wordDuration < bestWordTime) {
+            setBestWordTime(wordDuration);
+          }
+
+          playRetroSound('success');
+
+          if (lastWasError) {
+            triggerFeedback('recovery', 'success');
+          } else if (isNewStreakRecord || isNewWordRecord) {
+            triggerFeedback('record', 'record');
+            triggerPulse(isNewStreakRecord ? 'streak' : 'avg');
+          } else if (newStreak >= 5 && newStreak % 5 === 0) {
+            triggerFeedback('streak', 'success');
+            triggerPulse('streak');
+          } else if (newTotalCorrect > 3 && previousAvg > 0 && wordDuration < previousAvg * 0.75) {
+            triggerFeedback('speed', 'success');
+            triggerPulse('avg');
+          } else {
+            triggerPulse('streak');
+          }
+
+          setLastWasError(false);
+        } else {
+          setCurrentStreak(0);
+          setIsErrorFlash(true);
+          setIsShaking(true);
+          playRetroSound('error');
+          triggerFeedback('error', 'error');
+          setLastWasError(true);
+        }
+
+        const transitionDelay = isCorrect ? 0 : 300;
+
+        setTimeout(() => {
+          setIsErrorFlash(false);
+          setIsShaking(false);
+          setInputValue('');
+
+          if (roundWillComplete) {
+            setPhase('round-complete');
+          } else {
+            setCurrentWord(pickWord(correctCount + 1, dictionary, currentWord));
+            setWordStartTime(Date.now());
+          }
+        }, transitionDelay);
+      };
+
+      const handleKeyDown = (e) => {
+        if (e.key === 'Enter' && !isShaking) {
+          const typedWord = inputValue.trim().toLowerCase();
+          if (typedWord.length === 0) return;
+          processWordSubmission(typedWord);
+        }
+      };
+
+      const handleContinueRound = () => {
+        const nextRound = round + 1;
+        setRound(nextRound);
+        setCorrectCount(0);
+        setCurrentWord(pickWord(0, dictionary));
+        setInputValue('');
+        setWordStartTime(Date.now());
+        setPhase('typing');
+      };
+
+      const handleShare = () => {
+        const summary = `TREMA - Rodada ${String(round).padStart(2, '0')} concluída! Maior sequência: ${bestStreak}. Tempo médio: ${avgTime.toFixed(1)}s por palavra.`;
+        if (navigator.share) {
+          navigator.share({ text: summary }).catch(() => {});
+        } else if (navigator.clipboard) {
+          navigator.clipboard.writeText(summary)
+            .then(() => triggerFeedback('share', 'success'))
+            .catch(() => {});
+        }
+      };
+
+      // --- ESTADOS DE CARREGAMENTO DO DICIONÁRIO ---
+      if (dictionaryError) {
+        return (
+          <div className="countdown-container fade-step">
+            <div className="countdown-status">
+              NÃO FOI POSSÍVEL CARREGAR O DICIONÁRIO
+            </div>
+          </div>
+        );
+      }
+
+      if (dictionary.length === 0 || !currentWord) {
+        return (
+          <div className="countdown-container fade-step">
+            <div className="countdown-status">
+              CARREGANDO DICIONÁRIO...
+            </div>
+          </div>
+        );
+      }
+
+      // --- TELA DE CONCLUSÃO DA RODADA ---
+      if (phase === 'round-complete') {
+        return (
+          <div className="fade-step round-complete-container">
+            <div className="round-complete-tag">RODADA {String(round).padStart(2, '0')} CONCLUÍDA</div>
+            
+            <div className="round-complete-hero">10!</div>
+
+            <div className="round-complete-stats-row">
+              <div className="round-stat-item">
+                <span className="label">TEMPO MÉDIO</span>
+                <span className="value">{avgTime.toFixed(2)}s</span>
+              </div>
+              <div className="round-stat-item">
+                <span className="label">MAIOR SEQ.</span>
+                <span className="value">{bestStreak}</span>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '380px', margin: '0 auto' }}>
+              <button className="btn-primary" onClick={handleContinueRound}>
+                CONTINUAR
+              </button>
+              <button className="btn-secondary" onClick={handleShare}>
+                COMPARTILHAR RESULTADO
+              </button>
+              <button className="btn-secondary" onClick={onHome} style={{ border: 'none', color: 'var(--neutral)' }}>
+                VOLTAR
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      // --- GAMEPLAY PRINCIPAL ---
+      return (
+        <div className={`fade-step ${isShaking ? 'shake-screen' : ''}`} style={{ padding: '0' }}>
+          
+          {/* ESTRUTURA FIXA E ANCORADA DO GAMEPLAY */}
+          <div className="gameplay-stage">
+            
+            {/* 1. HUD MINIMALISTA NO TOPO (ALINHADO À COLUNA COM RESPIRO HORIZONTAL) */}
+            <div className="hud-minimal">
+              <div className="hud-stat-item">
+                <span className="hud-label">TEMPO MÉDIO</span>
+                <span className={`hud-val ${pulseAvg ? 'pulse' : ''}`}>
+                  {avgTime > 0 ? `${avgTime.toFixed(2)}s` : '0.00s'}
+                </span>
+              </div>
+
+              <div className="hud-stat-item align-right">
+                <span className="hud-label">MAIOR SEQ.</span>
+                <span className={`hud-val ${pulseStreak ? 'pulse' : ''}`}>
+                  {bestStreak}
+                </span>
+              </div>
+            </div>
+
+            {/* 2. PALAVRA ATUAL (CENTRALIZADA DENTRO DA COLUNA FIXA) */}
+            <div className="word-stage-container">
+              <h2 
+                className={`display-word ${isErrorFlash ? 'error-flash' : ''}`} 
+                style={{ 
+                  fontSize: 'clamp(1.6rem, 6vw, 3rem)', 
+                  color: '#ffffff', 
+                  letterSpacing: '4px', 
+                  margin: 0,
+                  textAlign: 'center',
+                  whiteSpace: 'nowrap',
+                  textShadow: '0 0 25px rgba(0, 255, 255, 0.4)',
+                  transition: 'color 0.15s ease, text-shadow 0.15s ease' 
+                }}
+              >
+                {currentWord}
+              </h2>
+            </div>
+
+            {/* 3. ÁREA DE DIGITAÇÃO E INSTRUÇÃO DISCRETA */}
+            <div style={{ textAlign: 'center', width: '100%' }}>
+              <input 
+                ref={inputRef}
+                type="text" 
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className={isErrorFlash ? 'error-flash' : ''}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  borderBottom: '2px solid var(--neon-secondary)',
+                  color: 'var(--neon-primary)',
+                  fontSize: '2rem',
+                  textAlign: 'center',
+                  outline: 'none',
+                  fontFamily: "'Chakra Petch', sans-serif",
+                  width: '100%',
+                  maxWidth: '320px',
+                  transition: 'border-color 0.15s ease'
+                }}
+                autoComplete="off"
+                spellCheck="false"
+              />
+              <div style={{ fontSize: '0.65rem', color: 'var(--neutral)', marginTop: '6px', letterSpacing: '1px' }}>
+                DIGITE A PALAVRA E PRESSIONE ENTER
+              </div>
+            </div>
+
+            {/* 4. FEEDBACK CONTEXTUAL */}
+            <div className="feedback-message-slot">
+              {feedback && (
+                <span key={feedback.id} className={`feedback-message tone-${feedback.tone} ${feedbackLeaving ? 'leaving' : ''}`}>
+                  {feedback.text}
+                </span>
+              )}
+            </div>
+
+            {/* 5. PROGRESSO VISUAL DA RODADA (ALINHADO À COLUNA COM RESPIRO HORIZONTAL) */}
+            <div className="round-progress-bar">
+              <span className="round-tag">RODADA {String(round).padStart(2, '0')}</span>
+
+              <div className="progress-dots-container" title={`${correctCount}/10 palavras completadas`}>
+                {Array.from({ length: 10 }).map((_, idx) => (
+                  <div 
+                    key={idx} 
+                    className={`progress-dot ${idx < correctCount ? 'active' : ''}`}
+                  />
+                ))}
+              </div>
+
+              <span className={`streak-inline-tag ${pulseStreak ? 'bump' : ''}`}>
+                SEQ. {currentStreak}
+              </span>
+            </div>
+
+          </div>
+
+        </div>
+      );
+    }
+
+    // --- PÁGINA DE RESULTADOS ---
+    function ResultPage({ stats, onRetry, onHome }) {
+      const data = stats || { wordsCorrect: 0, totalWords: 10, timeSeconds: 0, wpm: 0, accuracy: 0 };
+
+      const getMotivation = (accuracy) => {
+        if (accuracy >= 90) {
+          return {
+            title: "Excelente desempenho",
+            text: "Excelente! Você está pronto para o desafio.",
+            color: "#00ff88"
+          };
+        } else if (accuracy >= 70) {
+          return {
+            title: "Muito bom",
+            text: "Ótimo ritmo! Continue treinando para aumentar sua velocidade.",
+            color: "#00ffff"
+          };
+        } else if (accuracy >= 40) {
+          return {
+            title: "Intermediário",
+            text: "Bom progresso! Mais algumas rodadas e você ficará ainda mais rápido.",
+            color: "#ffe600"
+          };
+        } else {
+          return {
+            title: "Baixo desempenho",
+            text: "Todo especialista começou do zero. Continue praticando!",
+            color: "#ff0055"
+          };
+        }
+      };
+
+      const motivation = getMotivation(data.accuracy);
+
+      return (
+        <div className="fade-step" style={{ textAlign: 'center' }}>
+          <h1 style={{ color: '#00ffff', fontSize: '1.6rem', margin: '0 0 20px 0', textShadow: '0 0 10px #00ffff' }}>
+            TREINO CONCLUÍDO
+          </h1>
+
+          <div style={{
+            background: 'rgba(0, 10, 35, 0.85)',
+            border: `1px solid ${motivation.color}`,
+            boxShadow: `0 0 15px ${motivation.color}33`,
+            borderRadius: '8px',
+            padding: '16px 20px',
+            marginBottom: '20px',
+            textAlign: 'center'
+          }}>
+            <h3 style={{ 
+              color: motivation.color, 
+              fontFamily: "'Chakra Petch', sans-serif",
+              fontWeight: 700,
+              fontSize: '1.1rem', 
+              margin: '0 0 6px 0',
+              textTransform: 'uppercase'
+            }}>
+              {motivation.title}
+            </h3>
+            <p style={{ color: '#cbd5e1', fontSize: '0.9rem', margin: 0, lineHeight: '1.4' }}>
+              "{motivation.text}"
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+            <div style={{ background: 'rgba(0, 15, 45, 0.85)', border: '1px solid var(--neon-secondary)', borderRadius: '8px', padding: '16px 12px' }}>
+              <span style={{ fontSize: '0.7rem', color: 'var(--neon-secondary)', display: 'block', marginBottom: '4px' }}>VELOCIDADE MÉDIA</span>
+              <span style={{ fontSize: '1.4rem', fontFamily: "'Press Start 2P', monospace", color: 'var(--neon-primary)' }}>{data.wpm} PPM</span>
+            </div>
+
+            <div style={{ background: 'rgba(0, 15, 45, 0.85)', border: '1px solid var(--neon-secondary)', borderRadius: '8px', padding: '16px 12px' }}>
+              <span style={{ fontSize: '0.7rem', color: 'var(--neon-secondary)', display: 'block', marginBottom: '4px' }}>PRECISÃO</span>
+              <span style={{ fontSize: '1.4rem', fontFamily: "'Press Start 2P', monospace", color: motivation.color }}>{data.accuracy}%</span>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <button className="btn-primary" onClick={onRetry}>
+              CONTINUAR TREINO
+            </button>
+            <button className="btn-secondary" onClick={onHome}>
+              JOGAR AGORA
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // --- CONTROLLER PRINCIPAL DA SPA ---
+    function TremaTrainingSPA() {
+      const [step, setStep] = useState('device');
+      const [selectedDevice, setSelectedDevice] = useState('pc');
+      const [sessionStats, setSessionStats] = useState(null);
+
+      const handleConfirmDevice = () => setStep('tutorial');
+      const handleStartCountdown = () => setStep('countdown');
+      const handleStartSession = () => setStep('session');
+
+      const handleRestartFlow = () => {
+        setStep('device');
+      };
+
+      const handlePlaceholderBack = () => {
+        console.log('Navegação para a Home do Trema acionada.');
+      };
+
+      return (
+        <div className="trema-container">
+          {step === 'device' && (
+            <DeviceSelectStep 
+              selectedDevice={selectedDevice} 
+              onSelectDevice={setSelectedDevice} 
+              onConfirm={handleConfirmDevice}
+              onBack={handlePlaceholderBack} 
+            />
+          )}
+
+          {step === 'tutorial' && (
+            <TutorialStep 
+              device={selectedDevice} 
+              onStartTraining={handleStartCountdown} 
+              onBack={handleRestartFlow}
+            />
+          )}
+
+          {step === 'countdown' && (
+            <CountdownStep 
+              onComplete={handleStartSession} 
+            />
+          )}
+
+          {step === 'session' && (
+            <SessionPage 
+              onHome={handleRestartFlow}
+            />
+          )}
+
+          {step === 'result' && (
+            <ResultPage 
+              stats={sessionStats} 
+              onRetry={handleRestartFlow} 
+              onHome={handleRestartFlow}
+            />
+          )}
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<TremaTrainingSPA />);
+  </script>
+</body>
+</html>
