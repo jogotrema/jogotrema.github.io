@@ -387,6 +387,34 @@
             #give-up-btn { margin-top: 15px; }
         }
 
+        /* --- BOTÃO DE VOLTAR --- */
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            background: rgba(0, 10, 35, 0.6);
+            border: 1px solid var(--neon-dark-blue);
+            border-radius: 8px;
+            color: var(--neon-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 0 10px rgba(0, 136, 255, 0.2);
+            z-index: 5;
+        }
+
+        .back-btn:hover {
+            background: var(--neon-dark-blue);
+            color: #ffffff;
+            box-shadow: 0 0 15px var(--neon-blue);
+            transform: translateX(-2px);
+        }
+
         /* --- SISTEMA DE AJUDA --- */
         .help-btn {
             position: absolute;
@@ -528,6 +556,14 @@
 
     <!-- 1. TELA INICIAL -->
     <div id="start-screen">
+        <button id="back-btn" class="back-btn" onclick="window.location.href='index.html'" title="Voltar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2.5"
+             stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        </button>
         <button id="help-btn" class="help-btn" onclick="openHelpModal()" aria-label="Ajuda">?</button>
 
         <div class="header-area">
