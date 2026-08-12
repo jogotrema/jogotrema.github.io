@@ -785,24 +785,21 @@ const loadDictionary = async () => {
     .filter(word => word.length > 0);
 };
 
-const getWordDifficulty = (correctCount) => {
-  const progress = correctCount / 10;
-
-  if (progress < 0.2) return 1;
-  if (progress < 0.4) return 2;
-  if (progress < 0.6) return 3;
-  if (progress < 0.8) return 4;
-
+const getWordDifficulty = (wordNumber) => {
+  if (wordNumber <= 10) return 1;
+  if (wordNumber <= 20) return 2;
+  if (wordNumber <= 30) return 3;
+  if (wordNumber <= 40) return 4;
   return 5;
 };
 
 const getWordPool = (difficulty, dictionary) => {
   const rules = {
-    1: { minLength: 4, maxLength: 6 },
-    2: { minLength: 5, maxLength: 7 },
-    3: { minLength: 6, maxLength: 9 },
-    4: { minLength: 8, maxLength: 11 },
-    5: { minLength: 10, maxLength: 14 }
+    1: { minLength: 3, maxLength: 4 },
+    2: { minLength: 4, maxLength: 5 },
+    3: { minLength: 5, maxLength: 6 },
+    4: { minLength: 6, maxLength: 7 },
+    5: { minLength: 7, maxLength: 8 }
   };
 
   const rule = rules[difficulty];
@@ -813,8 +810,8 @@ const getWordPool = (difficulty, dictionary) => {
   );
 };
 
-const pickWord = (correctCount, dictionary, avoidWord = '') => {
-  const difficulty = getWordDifficulty(correctCount);
+const pickWord = (wordNumber, dictionary, avoidWord = '') => {
+  const difficulty = getWordDifficulty(wordNumber);
   const pool = getWordPool(difficulty, dictionary);
 
   if (pool.length === 0) {
@@ -1032,6 +1029,7 @@ const pickWord = (correctCount, dictionary, avoidWord = '') => {
 
       const [currentWord, setCurrentWord] = useState('');
       const [inputValue, setInputValue] = useState('');
+      const [wordsPresented, setWordsPresented] = useState(1);
       const [correctCount, setCorrectCount] = useState(0); 
       const [isErrorFlash, setIsErrorFlash] = useState(false);
       const [isShaking, setIsShaking] = useState(false);
@@ -1060,7 +1058,7 @@ const pickWord = (correctCount, dictionary, avoidWord = '') => {
             if (cancelled) return;
 
             setDictionary(words);
-            setCurrentWord(pickWord(0, words));
+            setCurrentWord(pickWord(1, words));
           } catch (error) {
             console.error('Erro ao carregar dicionário:', error);
             setDictionaryError(true);
@@ -1165,7 +1163,9 @@ const pickWord = (correctCount, dictionary, avoidWord = '') => {
           if (roundWillComplete) {
             setPhase('round-complete');
           } else {
-            setCurrentWord(pickWord(correctCount + 1, dictionary, currentWord));
+            const nextWordNumber = wordsPresented + 1;
+            setWordsPresented(nextWordNumber);
+            setCurrentWord(pickWord(nextWordNumber, dictionary, currentWord));
             setWordStartTime(Date.now());
           }
         }, transitionDelay);
@@ -1183,7 +1183,8 @@ const pickWord = (correctCount, dictionary, avoidWord = '') => {
         const nextRound = round + 1;
         setRound(nextRound);
         setCorrectCount(0);
-        setCurrentWord(pickWord(0, dictionary));
+        setWordsPresented(1);
+        setCurrentWord(pickWord(1, dictionary));
         setInputValue('');
         setWordStartTime(Date.now());
         setPhase('typing');
@@ -1464,7 +1465,7 @@ const pickWord = (correctCount, dictionary, avoidWord = '') => {
       };
 
       const handlePlaceholderBack = () => {
-        console.log('Navegação para a Home do Trema acionada.');
+        window.location.href = 'index.html';
       };
 
       return (
